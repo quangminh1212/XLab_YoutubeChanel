@@ -86,7 +86,7 @@ def country_dir_name(country_code: str) -> str:
 
 
 def output_path(base_dir: Path, country_code: str, year: int) -> Path:
-    return base_dir / country_dir_name(country_code) / f"{year}.txt"
+    return base_dir / country_dir_name(country_code) / str(year) / "channels.txt"
 
 
 def extract_json_object(text: str, marker: str) -> dict[str, Any] | None:
@@ -306,16 +306,6 @@ async def collect_country_web(client: httpx.AsyncClient, country_code: str, year
         except Exception:
             continue
 
-        current_year = max(years)
-        fast_records = [
-            ChannelRecord(title=title, url=url, year=current_year, country_code=country_code)
-            for title, url in query_rows
-        ]
-        if fast_records:
-            count = append_country_year_records(base_dir, country_code, current_year, fast_records)
-            summary[country_code][current_year] = count
-            print(f"[{country_code}][{current_year}] {count} channels (web, fast flush)", flush=True)
-
         fresh_rows = []
         known_urls = {url for bucket in grouped.values() for url in bucket.keys()}
         for title, url in query_rows:
@@ -334,9 +324,9 @@ async def collect_country_web(client: httpx.AsyncClient, country_code: str, year
 
         for year in sorted(touched_years):
             records = sorted(grouped[year].values(), key=lambda x: (x.title.lower(), x.url))
-            write_country_year_file(base_dir, country_code, year, records)
-            summary[country_code][year] = len(records)
-            print(f"[{country_code}][{year}] {len(records)} channels (web, flush)")
+            count = append_country_year_records(base_dir, country_code, year, records)
+            summary[country_code][year] = count
+            print(f"[{country_code}][{year}] {count} channels (web, flush)", flush=True)
 
     for year in sorted(years):
         records = sorted(grouped[year].values(), key=lambda x: (x.title.lower(), x.url))
