@@ -285,19 +285,12 @@ async def enrich_channel_year(client: httpx.AsyncClient, channel_url: str) -> in
     return parse_year_from_about_html(html)
 
 
-async def collect_country_web(client: httpx.AsyncClient, country_code: str, years: set[int], queries: list[str], max_pages: int, semaphore: asyncio.Semaphore) -> dict[int, list[ChannelRecord]]:
-    channel_map: dict[str, ChannelRecord] = {}
+async def collect_country_web(client: httpx.AsyncClient, country_code: str, years: set[int], queries: list[str], max_pages: int, semaphore: asyncio.Semaphore, base_dir: Path, summary: dict[str, dict[int, int]]) -> None:
+    grouped: dict[int, dict[str, ChannelRecord]] = {year: {} for year in years}
 
     async def run_query(seed: str):
         async with semaphore:
             return await search_channels_web(client, country_code, seed, max_pages)
-
-    query_results = await asyncio.gather(*(run_query(seed) for seed in queries), return_exceptions=True)
-    urls: set[tuple[str, str]] = set()
-    for result in query_results:
-        if isinstance(result, Exception):
-            continue
-        urls.update(result)
 
     async def enrich_one(title: str, url: str):
         async with semaphore:
@@ -307,22 +300,39 @@ async def collect_country_web(client: httpx.AsyncClient, country_code: str, year
                 year = None
             return title, url, year
 
-    enriched = await asyncio.gather(*(enrich_one(title, url) for title, url in urls), return_exceptions=True)
-    for item in enriched:
-        if isinstance(item, Exception):
+    for seed in queries:
+        try:
+            query_rows = await run_query(seed)
+        except Exception:
             continue
-        title, url, year = item
-        if year in years:
-            channel_map[url] = ChannelRecord(title=title, url=url, year=year, country_code=country_code)
 
-    grouped: dict[int, list[ChannelRecord]] = {year: [] for year in years}
-    for record in channel_map.values():
-        if record.year in grouped:
-            grouped[record.year].append(record)
+        fresh_rows = []
+        known_urls = {url for bucket in grouped.values() for url in bucket.keys()}
+        for title, url in query_rows:
+            if url not in known_urls:
+                fresh_rows.append((title, url))
 
-    for year in grouped:
-        grouped[year].sort(key=lambda x: (x.title.lower(), x.url))
-    return grouped
+        enriched = await asyncio.gather(*(enrich_one(title, url) for title, url in fresh_rows), return_exceptions=True)
+        touched_years: set[int] = set()
+        for item in enriched:
+            if isinstance(item, Exception):
+                continue
+            title, url, year = item
+            if year in years:
+                grouped[year][url] = ChannelRecord(title=title, url=url, year=year, country_code=country_code)
+                touched_years.add(year)
+
+        for year in sorted(touched_years):
+            records = sorted(grouped[year].values(), key=lambda x: (x.title.lower(), x.url))
+            write_country_year_file(base_dir, country_code, year, records)
+            summary[country_code][year] = len(records)
+            print(f"[{country_code}][{year}] {len(records)} channels (web, flush)")
+
+    for year in sorted(years):
+        records = sorted(grouped[year].values(), key=lambda x: (x.title.lower(), x.url))
+        write_country_year_file(base_dir, country_code, year, records)
+        summary[country_code][year] = len(records)
+        print(f"[{country_code}][{year}] done {len(records)} channels (web)")
 
 
 def write_country_year_file(base_dir: Path, country_code: str, year: int, records: list[ChannelRecord]) -> None:
@@ -378,16 +388,18 @@ async def run_web_mode(args: argparse.Namespace, client: httpx.AsyncClient, coun
     base_dir = Path(args.output_dir)
 
     for country_code in countries:
-        grouped = await collect_country_web(client, country_code, years, queries, args.max_pages_per_query, semaphore)
-        for year in sorted(years):
-            target = output_path(base_dir, country_code, year)
-            if target.exists() and not args.no_resume:
-                print(f"[{country_code}][{year}] skipped existing file")
+        if not args.no_resume:
+            missing_years = {
+                year for year in years if not output_path(base_dir, country_code, year).exists()
+            }
+            if not missing_years:
+                for year in sorted(years):
+                    print(f"[{country_code}][{year}] skipped existing file")
                 continue
-            records = grouped.get(year, [])
-            write_country_year_file(base_dir, country_code, year, records)
-            summary[country_code][year] = len(records)
-            print(f"[{country_code}][{year}] {len(records)} channels (web)")
+        else:
+            missing_years = years
+
+        await collect_country_web(client, country_code, missing_years, queries, args.max_pages_per_query, semaphore, base_dir, summary)
     return summary
 
 
