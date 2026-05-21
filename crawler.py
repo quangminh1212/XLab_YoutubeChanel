@@ -306,6 +306,16 @@ async def collect_country_web(client: httpx.AsyncClient, country_code: str, year
         except Exception:
             continue
 
+        current_year = max(years)
+        fast_records = [
+            ChannelRecord(title=title, url=url, year=current_year, country_code=country_code)
+            for title, url in query_rows
+        ]
+        if fast_records:
+            count = append_country_year_records(base_dir, country_code, current_year, fast_records)
+            summary[country_code][current_year] = count
+            print(f"[{country_code}][{current_year}] {count} channels (web, fast flush)", flush=True)
+
         fresh_rows = []
         known_urls = {url for bucket in grouped.values() for url in bucket.keys()}
         for title, url in query_rows:
@@ -330,9 +340,17 @@ async def collect_country_web(client: httpx.AsyncClient, country_code: str, year
 
     for year in sorted(years):
         records = sorted(grouped[year].values(), key=lambda x: (x.title.lower(), x.url))
-        write_country_year_file(base_dir, country_code, year, records)
-        summary[country_code][year] = len(records)
-        print(f"[{country_code}][{year}] done {len(records)} channels (web)")
+        if records:
+            write_country_year_file(base_dir, country_code, year, records)
+            summary[country_code][year] = len(records)
+            print(f"[{country_code}][{year}] done {len(records)} channels (web)")
+        else:
+            target = output_path(base_dir, country_code, year)
+            if not target.exists():
+                write_country_year_file(base_dir, country_code, year, records)
+            content = target.read_text(encoding="utf-8")
+            summary[country_code][year] = content.count("\n") + (1 if content else 0)
+            print(f"[{country_code}][{year}] done {summary[country_code][year]} channels (web)")
 
 
 def write_country_year_file(base_dir: Path, country_code: str, year: int, records: list[ChannelRecord]) -> None:
@@ -340,6 +358,22 @@ def write_country_year_file(base_dir: Path, country_code: str, year: int, record
     target.parent.mkdir(parents=True, exist_ok=True)
     lines = [f"{record.title} | {record.url}" for record in records]
     target.write_text("\n".join(lines), encoding="utf-8")
+
+
+def append_country_year_records(base_dir: Path, country_code: str, year: int, records: list[ChannelRecord]) -> int:
+    target = output_path(base_dir, country_code, year)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    existing: dict[str, str] = {}
+    if target.exists():
+        for line in target.read_text(encoding="utf-8").splitlines():
+            if " | " in line:
+                title, url = line.rsplit(" | ", 1)
+                existing[url] = title
+    for record in records:
+        existing[record.url] = record.title
+    lines = [f"{title} | {url}" for url, title in sorted(existing.items(), key=lambda item: (item[1].lower(), item[0]))]
+    target.write_text("\n".join(lines), encoding="utf-8")
+    return len(lines)
 
 
 async def run_api_mode(args: argparse.Namespace, client: httpx.AsyncClient, countries: list[str]) -> dict[str, dict[int, int]]:
