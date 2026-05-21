@@ -1,26 +1,23 @@
 ﻿import argparse
 import asyncio
 import json
-import re
 import string
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterable
-from urllib.parse import quote_plus
+from typing import Iterable
 
 import httpx
 
 
 API_BASE = "https://www.googleapis.com/youtube/v3"
-YOUTUBE_BASE = "https://www.youtube.com"
 SEARCH_QUOTA_COST = 100
-DEFAULT_MAX_PAGES = 1
+CHANNELS_QUOTA_COST = 1
 DEFAULT_CONCURRENCY = 6
+DEFAULT_MAX_PAGES = 1
 DEFAULT_QUOTA_BUDGET = 9_000
 DEFAULT_QUERIES = list(string.ascii_lowercase) + list(string.digits)
-CHANNEL_FILTER_SP = "EgIQAg%3D%3D"
 COUNTRY_NAMES = {
     "US": "United States",
     "VN": "Vietnam",
@@ -55,30 +52,23 @@ class QuotaBudget:
 class ChannelRecord:
     title: str
     url: str
-    year: int | None
+    year: int
     country_code: str
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Collect YouTube channel names and links by country and year")
-    parser.add_argument("--mode", choices=["web", "api"], default="web", help="web=no API key, api=YouTube Data API")
-    parser.add_argument("--api-key", help="YouTube Data API key (required if --mode api)")
-    parser.add_argument("--output-dir", default=".", help="Base output directory. Default: repo root (.)")
+    parser = argparse.ArgumentParser(description="Crawl YouTube channels by country and creation year")
+    parser.add_argument("--api-key", required=True, help="YouTube Data API key")
+    parser.add_argument("--output-dir", default=".", help="Base output directory. Default: repo root")
     parser.add_argument("--start-year", type=int, default=2005, help="Start year. Default: 2005")
     parser.add_argument("--end-year", type=int, default=datetime.now(timezone.utc).year, help="End year. Default: current UTC year")
-    parser.add_argument("--countries", nargs="*", help="ISO-3166-1 alpha-2 country codes. Example: US VN JP")
-    parser.add_argument("--max-pages-per-query", type=int, default=DEFAULT_MAX_PAGES, help="Max pages per query. Default: 1")
+    parser.add_argument("--countries", nargs="*", default=["VN"], help="ISO-3166-1 alpha-2 country codes. Default: VN")
+    parser.add_argument("--queries", nargs="*", help="Search seed queries. Default: a-z 0-9")
+    parser.add_argument("--max-pages-per-query", type=int, default=DEFAULT_MAX_PAGES, help="Search pages per query/country. Default: 1")
     parser.add_argument("--concurrency", type=int, default=DEFAULT_CONCURRENCY, help="Async concurrency. Default: 6")
-    parser.add_argument("--quota-budget", type=int, default=DEFAULT_QUOTA_BUDGET, help="Max quota units (api mode). Default: 9000")
-    parser.add_argument("--queries", nargs="*", help="Custom search seeds. Default: a-z 0-9")
-    parser.add_argument("--no-resume", action="store_true", help="Overwrite existing files instead of skipping")
+    parser.add_argument("--quota-budget", type=int, default=DEFAULT_QUOTA_BUDGET, help="Max quota units this run. Default: 9000")
+    parser.add_argument("--no-resume", action="store_true", help="Overwrite existing year files instead of preserving them")
     return parser.parse_args()
-
-
-def year_range(start_year: int, end_year: int) -> Iterable[int]:
-    if start_year > end_year:
-        raise ValueError("start-year must be <= end-year")
-    return range(start_year, end_year + 1)
 
 
 def country_dir_name(country_code: str) -> str:
@@ -89,268 +79,25 @@ def output_path(base_dir: Path, country_code: str, year: int) -> Path:
     return base_dir / country_dir_name(country_code) / str(year) / "channels.txt"
 
 
-def extract_json_object(text: str, marker: str) -> dict[str, Any] | None:
-    index = text.find(marker)
-    if index == -1:
-        return None
-    start = text.find("{", index)
-    if start == -1:
-        return None
-
-    depth = 0
-    in_string = False
-    escaped = False
-    for pos in range(start, len(text)):
-        char = text[pos]
-        if in_string:
-            if escaped:
-                escaped = False
-            elif char == "\\":
-                escaped = True
-            elif char == '"':
-                in_string = False
-            continue
-
-        if char == '"':
-            in_string = True
-        elif char == "{":
-            depth += 1
-        elif char == "}":
-            depth -= 1
-            if depth == 0:
-                try:
-                    return json.loads(text[start : pos + 1])
-                except json.JSONDecodeError:
-                    return None
-    return None
+def year_range(start_year: int, end_year: int) -> range:
+    if start_year > end_year:
+        raise ValueError("start-year must be <= end-year")
+    return range(start_year, end_year + 1)
 
 
-def iter_objects(node: Any):
-    if isinstance(node, dict):
-        yield node
-        for value in node.values():
-            yield from iter_objects(value)
-    elif isinstance(node, list):
-        for item in node:
-            yield from iter_objects(item)
+def chunked(items: list[str], size: int) -> Iterable[list[str]]:
+    for index in range(0, len(items), size):
+        yield items[index : index + size]
 
 
-def parse_channel_renderer(data: dict[str, Any]) -> tuple[str, str] | None:
-    channel_id = data.get("channelId")
-    title_runs = data.get("title", {}).get("simpleText")
-    if not title_runs:
-        runs = data.get("title", {}).get("runs", [])
-        title_runs = "".join(part.get("text", "") for part in runs).strip()
-    if not channel_id or not title_runs:
-        return None
-    return title_runs.strip(), f"{YOUTUBE_BASE}/channel/{channel_id}"
+def line_count(path: Path) -> int:
+    if not path.exists():
+        return 0
+    content = path.read_text(encoding="utf-8")
+    return content.count("\n") + (1 if content else 0)
 
 
-def parse_year_from_about_html(html: str) -> int | None:
-    data = extract_json_object(html, "var ytInitialData =")
-    if not data:
-        return None
-
-    for obj in iter_objects(data):
-        joined = obj.get("joinedDateText") if isinstance(obj, dict) else None
-        if isinstance(joined, dict):
-            simple = joined.get("content") or joined.get("simpleText")
-            if isinstance(simple, str):
-                match = re.search(r"(19|20)\d{2}", simple)
-                if match:
-                    return int(match.group(0))
-            runs = joined.get("runs", [])
-            text = " ".join(part.get("text", "") for part in runs if isinstance(part, dict))
-            match = re.search(r"(19|20)\d{2}", text)
-            if match:
-                return int(match.group(0))
-
-    match = re.search(r"(Joined|Đã tham gia)[^\n]{0,40}(19|20)\d{2}", html, flags=re.IGNORECASE)
-    if match:
-        year_match = re.search(r"(19|20)\d{2}", match.group(0))
-        if year_match:
-            return int(year_match.group(0))
-    return None
-
-
-async def fetch_text(client: httpx.AsyncClient, url: str, params: dict | None = None) -> str:
-    last_error: Exception | None = None
-    for attempt in range(4):
-        try:
-            response = await client.get(url, params=params, timeout=30.0)
-            if response.status_code in {429, 500, 502, 503, 504}:
-                await asyncio.sleep(2**attempt)
-                continue
-            response.raise_for_status()
-            return response.text
-        except (httpx.TimeoutException, httpx.TransportError) as error:
-            last_error = error
-            await asyncio.sleep(2**attempt)
-    if last_error:
-        raise last_error
-    raise RuntimeError(f"Cannot fetch {url}")
-
-
-async def fetch_json(client: httpx.AsyncClient, path: str, params: dict, budget: QuotaBudget | None = None) -> dict:
-    if path == "/search" and budget:
-        await budget.spend(SEARCH_QUOTA_COST)
-    response = await client.get(f"{API_BASE}{path}", params=params, timeout=30.0)
-    response.raise_for_status()
-    return response.json()
-
-
-async def fetch_supported_regions_api(client: httpx.AsyncClient, api_key: str) -> list[str]:
-    payload = await fetch_json(client, "/i18nRegions", {"part": "snippet", "hl": "en_US", "key": api_key})
-    regions = sorted({item["snippet"]["gl"] for item in payload.get("items", []) if item.get("snippet", {}).get("gl")})
-    if not regions:
-        raise RuntimeError("No supported regions returned from YouTube API")
-    return regions
-
-
-async def fetch_supported_regions_web(client: httpx.AsyncClient) -> list[str]:
-    html = await fetch_text(client, f"{YOUTUBE_BASE}/i18n")
-    codes = sorted(set(re.findall(r'"gl":"([A-Z]{2})"', html)))
-    if codes:
-        return codes
-    return ["US", "VN", "JP", "KR", "GB", "DE", "FR", "IN", "BR", "CA"]
-
-
-async def search_channels_api(client: httpx.AsyncClient, api_key: str, country_code: str, year: int, query: str, max_pages: int, budget: QuotaBudget) -> list[ChannelRecord]:
-    records: list[ChannelRecord] = []
-    next_page_token = None
-    published_after = f"{year}-01-01T00:00:00Z"
-    published_before = f"{year + 1}-01-01T00:00:00Z"
-
-    for _ in range(max_pages):
-        params = {
-            "part": "snippet",
-            "type": "channel",
-            "maxResults": 50,
-            "q": query,
-            "regionCode": country_code,
-            "publishedAfter": published_after,
-            "publishedBefore": published_before,
-            "key": api_key,
-        }
-        if next_page_token:
-            params["pageToken"] = next_page_token
-
-        payload = await fetch_json(client, "/search", params, budget)
-        for item in payload.get("items", []):
-            snippet = item.get("snippet", {})
-            channel_id = snippet.get("channelId") or item.get("id", {}).get("channelId")
-            title = (snippet.get("channelTitle") or snippet.get("title") or "").strip()
-            if not channel_id or not title:
-                continue
-            records.append(ChannelRecord(title=title.replace("\n", " "), url=f"{YOUTUBE_BASE}/channel/{channel_id}", year=year, country_code=country_code))
-
-        next_page_token = payload.get("nextPageToken")
-        if not next_page_token:
-            break
-    return records
-
-
-async def search_channels_web(client: httpx.AsyncClient, country_code: str, query: str, max_pages: int) -> list[tuple[str, str]]:
-    results: list[tuple[str, str]] = []
-    params = {
-        "search_query": query,
-        "sp": CHANNEL_FILTER_SP,
-        "gl": country_code,
-        "hl": "en",
-    }
-
-    for _ in range(max_pages):
-        html = await fetch_text(client, f"{YOUTUBE_BASE}/results", params=params)
-        data = extract_json_object(html, "var ytInitialData =")
-        if not data:
-            break
-
-        for node in iter_objects(data):
-            renderer = node.get("channelRenderer") if isinstance(node, dict) else None
-            if isinstance(renderer, dict):
-                parsed = parse_channel_renderer(renderer)
-                if parsed:
-                    results.append(parsed)
-
-        break
-    dedup: dict[str, str] = {}
-    for title, url in results:
-        dedup[url] = title
-    return [(title, url) for url, title in dedup.items()]
-
-
-async def enrich_channel_year(client: httpx.AsyncClient, channel_url: str) -> int | None:
-    about_url = channel_url.rstrip("/") + "/about"
-    html = await fetch_text(client, about_url)
-    return parse_year_from_about_html(html)
-
-
-async def collect_country_web(client: httpx.AsyncClient, country_code: str, years: set[int], queries: list[str], max_pages: int, semaphore: asyncio.Semaphore, base_dir: Path, summary: dict[str, dict[int, int]]) -> None:
-    grouped: dict[int, dict[str, ChannelRecord]] = {year: {} for year in years}
-
-    async def run_query(seed: str):
-        async with semaphore:
-            return await search_channels_web(client, country_code, seed, max_pages)
-
-    async def enrich_one(title: str, url: str):
-        async with semaphore:
-            try:
-                year = await enrich_channel_year(client, url)
-            except Exception:
-                year = None
-            return title, url, year
-
-    for seed in queries:
-        try:
-            query_rows = await run_query(seed)
-        except Exception:
-            continue
-
-        fresh_rows = []
-        known_urls = {url for bucket in grouped.values() for url in bucket.keys()}
-        for title, url in query_rows:
-            if url not in known_urls:
-                fresh_rows.append((title, url))
-
-        enriched = await asyncio.gather(*(enrich_one(title, url) for title, url in fresh_rows), return_exceptions=True)
-        touched_years: set[int] = set()
-        for item in enriched:
-            if isinstance(item, Exception):
-                continue
-            title, url, year = item
-            if year in years:
-                grouped[year][url] = ChannelRecord(title=title, url=url, year=year, country_code=country_code)
-                touched_years.add(year)
-
-        for year in sorted(touched_years):
-            records = sorted(grouped[year].values(), key=lambda x: (x.title.lower(), x.url))
-            count = append_country_year_records(base_dir, country_code, year, records)
-            summary[country_code][year] = count
-            print(f"[{country_code}][{year}] {count} channels (web, flush)", flush=True)
-
-    for year in sorted(years):
-        records = sorted(grouped[year].values(), key=lambda x: (x.title.lower(), x.url))
-        if records:
-            write_country_year_file(base_dir, country_code, year, records)
-            summary[country_code][year] = len(records)
-            print(f"[{country_code}][{year}] done {len(records)} channels (web)")
-        else:
-            target = output_path(base_dir, country_code, year)
-            if not target.exists():
-                write_country_year_file(base_dir, country_code, year, records)
-            content = target.read_text(encoding="utf-8")
-            summary[country_code][year] = content.count("\n") + (1 if content else 0)
-            print(f"[{country_code}][{year}] done {summary[country_code][year]} channels (web)")
-
-
-def write_country_year_file(base_dir: Path, country_code: str, year: int, records: list[ChannelRecord]) -> None:
-    target = output_path(base_dir, country_code, year)
-    target.parent.mkdir(parents=True, exist_ok=True)
-    lines = [f"{record.title} | {record.url}" for record in records]
-    target.write_text("\n".join(lines), encoding="utf-8")
-
-
-def append_country_year_records(base_dir: Path, country_code: str, year: int, records: list[ChannelRecord]) -> int:
+def merge_write_records(base_dir: Path, country_code: str, year: int, records: list[ChannelRecord]) -> int:
     target = output_path(base_dir, country_code, year)
     target.parent.mkdir(parents=True, exist_ok=True)
     existing: dict[str, str] = {}
@@ -360,98 +107,174 @@ def append_country_year_records(base_dir: Path, country_code: str, year: int, re
                 title, url = line.rsplit(" | ", 1)
                 existing[url] = title
     for record in records:
-        existing[record.url] = record.title
+        existing[record.url] = record.title.replace("\n", " ").strip()
     lines = [f"{title} | {url}" for url, title in sorted(existing.items(), key=lambda item: (item[1].lower(), item[0]))]
     target.write_text("\n".join(lines), encoding="utf-8")
     return len(lines)
 
 
-async def run_api_mode(args: argparse.Namespace, client: httpx.AsyncClient, countries: list[str]) -> dict[str, dict[int, int]]:
-    if not args.api_key:
-        raise ValueError("--api-key is required when --mode api")
-
-    budget = QuotaBudget(args.quota_budget)
-    semaphore = asyncio.Semaphore(args.concurrency)
-    summary: dict[str, dict[int, int]] = defaultdict(dict)
-
-    async def collect(country_code: str, year: int, queries: list[str]) -> list[ChannelRecord]:
-        async def bounded(seed: str):
-            async with semaphore:
-                return await search_channels_api(client, args.api_key, country_code, year, seed, args.max_pages_per_query, budget)
-
-        batches = await asyncio.gather(*(bounded(seed) for seed in queries), return_exceptions=True)
-        dedup: dict[str, ChannelRecord] = {}
-        for batch in batches:
-            if isinstance(batch, Exception):
+async def fetch_json(client: httpx.AsyncClient, path: str, params: dict, budget: QuotaBudget, cost: int) -> dict:
+    await budget.spend(cost)
+    last_error: Exception | None = None
+    for attempt in range(4):
+        try:
+            response = await client.get(f"{API_BASE}{path}", params=params, timeout=30.0)
+            if response.status_code in {429, 500, 502, 503, 504}:
+                await asyncio.sleep(2**attempt)
                 continue
-            for item in batch:
-                dedup[item.url] = item
-        return sorted(dedup.values(), key=lambda x: (x.title.lower(), x.url))
-
-    try:
-        for country_code in countries:
-            for year in year_range(args.start_year, args.end_year):
-                target = output_path(Path(args.output_dir), country_code, year)
-                if target.exists() and not args.no_resume:
-                    print(f"[{country_code}][{year}] skipped existing file")
-                    continue
-                records = await collect(country_code, year, args.queries or DEFAULT_QUERIES)
-                write_country_year_file(Path(args.output_dir), country_code, year, records)
-                summary[country_code][year] = len(records)
-                print(f"[{country_code}][{year}] {len(records)} channels, quota_left={budget.remaining}")
-    except QuotaBudgetExceeded as error:
-        print(str(error))
-    return summary
+            response.raise_for_status()
+            return response.json()
+        except (httpx.TimeoutException, httpx.TransportError) as error:
+            last_error = error
+            await asyncio.sleep(2**attempt)
+    if last_error:
+        raise last_error
+    response.raise_for_status()
+    return response.json()
 
 
-async def run_web_mode(args: argparse.Namespace, client: httpx.AsyncClient, countries: list[str]) -> dict[str, dict[int, int]]:
-    semaphore = asyncio.Semaphore(args.concurrency)
-    summary: dict[str, dict[int, int]] = defaultdict(dict)
+async def search_channel_ids(
+    client: httpx.AsyncClient,
+    api_key: str,
+    budget: QuotaBudget,
+    country_code: str,
+    query: str,
+    max_pages: int,
+) -> set[str]:
+    ids: set[str] = set()
+    next_page_token = None
+    for _ in range(max_pages):
+        params = {
+            "part": "snippet",
+            "type": "channel",
+            "maxResults": 50,
+            "q": query,
+            "regionCode": country_code,
+            "key": api_key,
+        }
+        if next_page_token:
+            params["pageToken"] = next_page_token
+        payload = await fetch_json(client, "/search", params, budget, SEARCH_QUOTA_COST)
+        for item in payload.get("items", []):
+            channel_id = item.get("id", {}).get("channelId") or item.get("snippet", {}).get("channelId")
+            if channel_id:
+                ids.add(channel_id)
+        next_page_token = payload.get("nextPageToken")
+        if not next_page_token:
+            break
+    return ids
+
+
+async def fetch_channel_records(
+    client: httpx.AsyncClient,
+    api_key: str,
+    budget: QuotaBudget,
+    country_code: str,
+    channel_ids: list[str],
+) -> list[ChannelRecord]:
+    if not channel_ids:
+        return []
+    params = {
+        "part": "snippet",
+        "id": ",".join(channel_ids),
+        "maxResults": 50,
+        "key": api_key,
+    }
+    payload = await fetch_json(client, "/channels", params, budget, CHANNELS_QUOTA_COST)
+    records: list[ChannelRecord] = []
+    for item in payload.get("items", []):
+        snippet = item.get("snippet", {})
+        channel_id = item.get("id")
+        title = (snippet.get("title") or "").strip()
+        published_at = snippet.get("publishedAt") or ""
+        if not channel_id or not title or len(published_at) < 4:
+            continue
+        records.append(
+            ChannelRecord(
+                title=title,
+                url=f"https://www.youtube.com/channel/{channel_id}",
+                year=int(published_at[:4]),
+                country_code=country_code,
+            )
+        )
+    return records
+
+
+async def crawl_country(
+    client: httpx.AsyncClient,
+    args: argparse.Namespace,
+    country_code: str,
+    years: set[int],
+    budget: QuotaBudget,
+    semaphore: asyncio.Semaphore,
+    summary: dict[str, dict[int, int]],
+) -> None:
     queries = args.queries or DEFAULT_QUERIES
-    years = set(year_range(args.start_year, args.end_year))
     base_dir = Path(args.output_dir)
+    channel_ids: set[str] = set()
 
-    for country_code in countries:
-        if not args.no_resume:
-            missing_years = {
-                year for year in years if not output_path(base_dir, country_code, year).exists()
-            }
-            if not missing_years:
-                for year in sorted(years):
-                    print(f"[{country_code}][{year}] skipped existing file")
-                continue
-        else:
-            missing_years = years
+    async def run_query(seed: str) -> set[str]:
+        async with semaphore:
+            return await search_channel_ids(client, args.api_key, budget, country_code, seed, args.max_pages_per_query)
 
-        await collect_country_web(client, country_code, missing_years, queries, args.max_pages_per_query, semaphore, base_dir, summary)
-    return summary
+    for task in asyncio.as_completed([asyncio.create_task(run_query(seed)) for seed in queries]):
+        try:
+            channel_ids.update(await task)
+        except QuotaBudgetExceeded:
+            raise
+        except Exception as error:
+            print(f"[{country_code}] search error: {error}", flush=True)
+
+    print(f"[{country_code}] found {len(channel_ids)} unique channel ids", flush=True)
+
+    async def run_batch(batch: list[str]) -> list[ChannelRecord]:
+        async with semaphore:
+            return await fetch_channel_records(client, args.api_key, budget, country_code, batch)
+
+    for task in asyncio.as_completed([asyncio.create_task(run_batch(batch)) for batch in chunked(sorted(channel_ids), 50)]):
+        try:
+            records = await task
+        except QuotaBudgetExceeded:
+            raise
+        except Exception as error:
+            print(f"[{country_code}] channel batch error: {error}", flush=True)
+            continue
+        by_year: dict[int, list[ChannelRecord]] = defaultdict(list)
+        for record in records:
+            if record.year in years:
+                by_year[record.year].append(record)
+        for year, year_records in sorted(by_year.items()):
+            count = merge_write_records(base_dir, country_code, year, year_records)
+            summary[country_code][year] = count
+            print(f"[{country_code}][{year}] {count} channels, quota_left={budget.remaining}", flush=True)
+
+    for year in sorted(years):
+        target = output_path(base_dir, country_code, year)
+        if not target.exists() or args.no_resume:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.touch(exist_ok=True)
+        summary[country_code][year] = line_count(target)
 
 
 async def main() -> None:
     args = parse_args()
-    output_dir = Path(args.output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    headers = {
-        "Accept": "text/html,application/xhtml+xml,application/json",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
-    }
+    years = set(year_range(args.start_year, args.end_year))
+    budget = QuotaBudget(args.quota_budget)
+    semaphore = asyncio.Semaphore(args.concurrency)
+    summary: dict[str, dict[int, int]] = defaultdict(dict)
+    headers = {"Accept": "application/json", "User-Agent": "XLab-YouTube-Channel-Crawler/1.0"}
 
     async with httpx.AsyncClient(headers=headers, follow_redirects=True) as client:
-        if args.countries:
-            countries = [code.upper() for code in args.countries]
-        elif args.mode == "api":
-            countries = await fetch_supported_regions_api(client, args.api_key)
-        else:
-            countries = await fetch_supported_regions_web(client)
+        try:
+            for country_code in [code.upper() for code in args.countries]:
+                await crawl_country(client, args, country_code, years, budget, semaphore, summary)
+        except QuotaBudgetExceeded as error:
+            print(str(error), flush=True)
 
-        summary = await (run_api_mode(args, client, countries) if args.mode == "api" else run_web_mode(args, client, countries))
-
-    summary_path = output_dir / "summary.json"
+    summary_path = Path(args.output_dir) / "summary.json"
     summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"Saved summary: {summary_path}")
+    print(f"Saved summary: {summary_path}", flush=True)
 
 
 if __name__ == "__main__":
     asyncio.run(main())
-
