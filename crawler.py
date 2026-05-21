@@ -21,6 +21,18 @@ DEFAULT_CONCURRENCY = 6
 DEFAULT_QUOTA_BUDGET = 9_000
 DEFAULT_QUERIES = list(string.ascii_lowercase) + list(string.digits)
 CHANNEL_FILTER_SP = "EgIQAg%3D%3D"
+COUNTRY_NAMES = {
+    "US": "United States",
+    "VN": "Vietnam",
+    "JP": "Japan",
+    "KR": "South Korea",
+    "GB": "United Kingdom",
+    "DE": "Germany",
+    "FR": "France",
+    "IN": "India",
+    "BR": "Brazil",
+    "CA": "Canada",
+}
 
 
 class QuotaBudgetExceeded(RuntimeError):
@@ -69,8 +81,12 @@ def year_range(start_year: int, end_year: int) -> Iterable[int]:
     return range(start_year, end_year + 1)
 
 
+def country_dir_name(country_code: str) -> str:
+    return COUNTRY_NAMES.get(country_code.upper(), country_code.upper())
+
+
 def output_path(base_dir: Path, country_code: str, year: int) -> Path:
-    return base_dir / country_code / f"{year}.txt"
+    return base_dir / country_dir_name(country_code) / f"{year}.txt"
 
 
 def extract_json_object(text: str, marker: str) -> dict[str, Any] | None:
