@@ -63,7 +63,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Collect YouTube channel names and links by country and year")
     parser.add_argument("--mode", choices=["web", "api"], default="web", help="web=no API key, api=YouTube Data API")
     parser.add_argument("--api-key", help="YouTube Data API key (required if --mode api)")
-    parser.add_argument("--output-dir", default="output", help="Base output directory. Default: output")
+    parser.add_argument("--output-dir", default=".", help="Base output directory. Default: repo root (.)")
     parser.add_argument("--start-year", type=int, default=2005, help="Start year. Default: 2005")
     parser.add_argument("--end-year", type=int, default=datetime.now(timezone.utc).year, help="End year. Default: current UTC year")
     parser.add_argument("--countries", nargs="*", help="ISO-3166-1 alpha-2 country codes. Example: US VN JP")

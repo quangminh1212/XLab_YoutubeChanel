@@ -1,3 +1,3 @@
-@echo off
-setlocal
-python crawler.py %*
+@echo off
+setlocal
+python crawler.py --output-dir . %*
