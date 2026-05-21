@@ -5,4 +5,3 @@
 venv/
 *.log
 .playwright-mcp/
-summary.json
