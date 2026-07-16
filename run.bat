@@ -1,9 +1,5 @@
 @echo off
 setlocal
-
-if "%YOUTUBE_API_KEY%"=="" (
-  echo Missing YOUTUBE_API_KEY environment variable.
-  exit /b 1
-)
-
-python crawler.py --api-key "%YOUTUBE_API_KEY%" %*
+cd /d "%~dp0"
+set PYTHONIOENCODING=utf-8
+"C:\Program Files\Python310\python.exe" crawler.py --countries VN --max-pages-per-query 8 --concurrency 5 --delay 0.25 %*

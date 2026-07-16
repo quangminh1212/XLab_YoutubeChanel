@@ -1,7 +1,9 @@
-﻿__pycache__/
+__pycache__/
 *.pyc
-.pytest_cache/
 .venv/
 venv/
+.env
 *.log
-.playwright-mcp/
+smoke_test.log
+crawl_full.log
+crawl_full.err.log
