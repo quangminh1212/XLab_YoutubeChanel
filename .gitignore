@@ -7,3 +7,5 @@ venv/
 smoke_test.log
 crawl_full.log
 crawl_full.err.log
+crawl_retry.log
+crawl_retry.err.log
