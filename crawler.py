@@ -169,8 +169,9 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--start-year", type=int, default=2005)
     p.add_argument("--end-year", type=int, default=datetime.now(timezone.utc).year)
     p.add_argument("--max-pages-per-query", type=int, default=10)
-    p.add_argument("--concurrency", type=int, default=4)
-    p.add_argument("--delay", type=float, default=0.35)
+    p.add_argument("--concurrency", type=int, default=32)
+    p.add_argument("--delay", type=float, default=0.05)
+    p.add_argument("--batch-size", type=int, default=160)
     p.add_argument("--skip-search", action="store_true")
     p.add_argument("--enrich-only", action="store_true", help="Only enrich known ids (discovered+existing)")
     p.add_argument("--fetch-free-proxies", action="store_true")
@@ -301,6 +302,12 @@ def subs_from_html(html: str) -> int | None:
         r'"subscriberCountText"\s*:\s*\{[^}]*?"content"\s*:\s*"([^"]+)"',
         r'"subscriberCountText"\s*:\s*\{[^}]*?"accessibility"\s*:\s*\{\s*"accessibilityData"\s*:\s*\{\s*"label"\s*:\s*"([^"]+)"',
         r'"subscriberCount"\s*:\s*"(\d+)"',
+        # newer UI: plain content/simpleText/label with "X subscribers"
+        r'"content"\s*:\s*"([^"]*?\bsubscribers?\b[^"]*)"',
+        r'"simpleText"\s*:\s*"([^"]*?\bsubscribers?\b[^"]*)"',
+        r'"label"\s*:\s*"([^"]*?\bsubscribers?\b[^"]*)"',
+        r'"content"\s*:\s*"([^"]*?(?:người đăng ký|nguoi dang ky)[^"]*)"',
+        r'"simpleText"\s*:\s*"([^"]*?(?:người đăng ký|nguoi dang ky)[^"]*)"',
     ]
     for pat in patterns:
         m = re.search(pat, html, re.I)
@@ -326,7 +333,7 @@ def is_blocked(resp: httpx.Response) -> bool:
     return False
 
 
-async def make_client(proxy: str | None = None) -> httpx.AsyncClient:
+async def make_client(proxy: str | None = None, timeout: float = 14.0) -> httpx.AsyncClient:
     kwargs: dict[str, Any] = {
         "headers": {
             "User-Agent": (
@@ -336,8 +343,9 @@ async def make_client(proxy: str | None = None) -> httpx.AsyncClient:
             "Accept-Language": "en-US,en;q=0.9,vi;q=0.8",
         },
         "follow_redirects": True,
-        "timeout": 35.0,
+        "timeout": timeout,
         "http2": False,
+        "limits": httpx.Limits(max_connections=200, max_keepalive_connections=80),
     }
     if proxy:
         kwargs["proxies"] = proxy
@@ -369,9 +377,20 @@ async def fetch_free_proxies(limit: int) -> list[str]:
 async def probe_proxy(proxy: str) -> bool:
     p = proxy if "://" in proxy else f"http://{proxy}"
     try:
-        async with await make_client(p) as c:
+        kwargs: dict[str, Any] = {
+            "headers": {
+                "User-Agent": (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+                ),
+            },
+            "follow_redirects": True,
+            "timeout": 8.0,
+            "proxies": p,
+        }
+        async with httpx.AsyncClient(**kwargs) as c:
             r = await c.get("https://www.youtube.com/")
-            return (not is_blocked(r)) and r.status_code == 200 and len(r.text) > 50000
+            return (not is_blocked(r)) and r.status_code == 200 and len(r.text) > 20000
     except Exception:
         return False
 
@@ -394,7 +413,9 @@ async def build_pool(args: argparse.Namespace) -> ProxyPool:
                     ok.append(p)
                     log(f"[proxy] OK {p} total={len(ok)}")
 
-        await asyncio.gather(*[chk(p) for p in cands[:80]])
+        # cap probe set so startup stays fast under high concurrency runs
+        probe_n = min(48, max(16, args.max_proxies * 2))
+        await asyncio.gather(*[chk(p) for p in cands[:probe_n]])
         proxies.extend(ok[: args.max_proxies])
         Path(args.output_dir, "working_proxies.txt").write_text("\n".join(ok[: args.max_proxies]) + "\n", encoding="utf-8")
         log(f"[proxy] working={len(ok[:args.max_proxies])}")
@@ -491,6 +512,20 @@ async def search_channels(client: httpx.AsyncClient, meta: ClientMeta, query: st
     return found
 
 
+def _apply_about_html(info: ChannelInfo, html: str) -> ChannelInfo:
+    y = year_from_html(html)
+    s = subs_from_html(html)
+    if y is not None:
+        info.year = y
+    if s is not None:
+        info.subscribers = s
+    if not info.title or info.title == info.channel_id:
+        mt = re.search(r'"channelMetadataRenderer"\s*:\s*\{[^}]*?"title"\s*:\s*"([^"]+)"', html)
+        if mt:
+            info.title = mt.group(1)
+    return info
+
+
 async def enrich_channel(
     channel_id: str,
     title: str,
@@ -498,6 +533,7 @@ async def enrich_channel(
     sem: asyncio.Semaphore,
     delay: float,
     cache: dict[str, ChannelInfo],
+    shared_client: httpx.AsyncClient | None = None,
 ) -> ChannelInfo:
     if channel_id in cache and cache[channel_id].subscribers is not None and cache[channel_id].year is not None:
         return cache[channel_id]
@@ -510,43 +546,49 @@ async def enrich_channel(
     if title and (not info.title or info.title == channel_id):
         info.title = title
 
-    modes: list[str | None] = [None]
-    if len(pool):
-        modes.extend([await pool.next(), await pool.next()])
-    modes.append(None)
+    url = f"https://www.youtube.com/channel/{channel_id}/about"
 
-    for attempt, proxy in enumerate(modes):
+    async with sem:
+        if delay > 0:
+            await asyncio.sleep(delay + random.uniform(0, max(0.005, delay * 0.25)))
+        # 1) shared direct client (fast path)
+        if shared_client is not None:
+            try:
+                r = await asyncio.wait_for(shared_client.get(url), timeout=8.0)
+                if not is_blocked(r) and r.status_code == 200 and len(r.text) > 5000:
+                    info = _apply_about_html(info, r.text)
+                    if info.year is not None and info.subscribers is not None:
+                        cache[channel_id] = info
+                        return info
+            except Exception:
+                pass
+        # 2) one-shot direct
         try:
-            async with sem:
-                await asyncio.sleep(delay + random.uniform(0, delay * 0.4))
-                async with await make_client(proxy) as client:
-                    r = await client.get(f"https://www.youtube.com/channel/{channel_id}/about")
+            async with await make_client(None, timeout=8.0) as client:
+                r = await client.get(url)
+                if not is_blocked(r) and r.status_code == 200 and len(r.text) > 5000:
+                    info = _apply_about_html(info, r.text)
+                    if info.year is not None and info.subscribers is not None:
+                        cache[channel_id] = info
+                        return info
+        except Exception:
+            pass
+        # 3) one proxy fallback
+        if len(pool):
+            proxy = await pool.next()
+            try:
+                async with await make_client(proxy, timeout=7.0) as client:
+                    r = await client.get(url)
                     if is_blocked(r):
-                        if proxy:
-                            await pool.mark_bad(proxy)
-                        else:
-                            await asyncio.sleep(3 + attempt)
-                        continue
-                    if r.status_code == 200 and len(r.text) > 5000:
-                        html = r.text
-                        y = year_from_html(html)
-                        s = subs_from_html(html)
-                        if y is not None:
-                            info.year = y
-                        if s is not None:
-                            info.subscribers = s
-                        # title from html if empty
-                        if not info.title or info.title == channel_id:
-                            mt = re.search(r'"channelMetadataRenderer"\s*:\s*\{[^}]*?"title"\s*:\s*"([^"]+)"', html)
-                            if mt:
-                                info.title = mt.group(1)
+                        await pool.mark_bad(proxy)
+                    elif r.status_code == 200 and len(r.text) > 5000:
+                        info = _apply_about_html(info, r.text)
                         if info.year is not None and info.subscribers is not None:
                             cache[channel_id] = info
                             return info
-        except Exception:
-            if proxy:
+            except Exception:
                 await pool.mark_bad(proxy)
-            await asyncio.sleep(0.5)
+
     cache[channel_id] = info
     return info
 
@@ -752,49 +794,91 @@ async def main() -> None:
     else:
         log("[search] skipped")
 
-    # Phase enrich
-    todo = list(all_channels.items())
-    # prioritize not fully enriched
-    todo.sort(key=lambda kv: 0 if kv[0] not in cache or cache[kv[0]].subscribers is None else 1)
-    log(f"[enrich] todo={len(todo)} min_subs={args.min_subs}")
+    # Phase enrich — only ids never successfully fetched.
+    # year-only (subs hidden by YouTube) is treated as done; re-fetching won't help.
+    todo = [
+        (cid, title)
+        for cid, title in all_channels.items()
+        if cid not in cache
+        or (cache[cid].subscribers is None and cache[cid].year is None)
+    ]
+    year_only = sum(
+        1
+        for cid in all_channels
+        if cid in cache and cache[cid].year is not None and cache[cid].subscribers is None
+    )
+    log(
+        f"[enrich] todo={len(todo)} year_only_skip={year_only} "
+        f"cached_full={len(all_channels)-len(todo)-year_only} "
+        f"min_subs={args.min_subs} conc={args.concurrency} delay={args.delay}"
+    )
 
     done = ok1k = below = unknown = 0
-    batch = 40
-    for i in range(0, len(todo), batch):
-        # refill proxies occasionally
-        if i > 0 and i % (batch * 5) == 0 and len(pool) < 3 and args.fetch_free_proxies:
-            log("[proxy] low, refill...")
-            cands = await fetch_free_proxies(15)
-            for p in cands[:40]:
-                if await probe_proxy(p):
-                    key = p if "://" in p else f"http://{p}"
-                    if key not in pool.proxies:
-                        pool.proxies.append(key)
-            log(f"[proxy] alive={len(pool)}")
+    batch = max(48, int(args.batch_size))
+    log(f"[enrich] starting workers conc={args.concurrency} batch={batch}")
 
-        chunk = todo[i : i + batch]
-        tasks = [enrich_channel(cid, title, pool, sem, args.delay, cache) for cid, title in chunk]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        for (cid, title), res in zip(chunk, results):
-            done += 1
-            if isinstance(res, Exception):
-                unknown += 1
-                continue
-            info = res
-            if info.subscribers is None or info.year is None:
-                unknown += 1
-            elif info.subscribers >= args.min_subs:
-                ok1k += 1
-            else:
-                below += 1
-        log(
-            f"[enrich] {done}/{len(todo)} min1000={ok1k} below={below} unknown={unknown} proxies={len(pool)}"
-        )
-        if done % 200 == 0 or i + batch >= len(todo):
-            save_enrich_cache(base, cache)
-            summary = write_outputs(base, cache, args.min_subs, years)
-            log(f"[flush] min1000={summary['min1000']} below={summary['below_1000']} unknown={summary['unknown']}")
-        await asyncio.sleep(0.5)
+    async with await make_client(None, timeout=9.0) as shared:
+        for i in range(0, len(todo), batch):
+            if i > 0 and i % (batch * 10) == 0 and len(pool) < 2 and args.fetch_free_proxies:
+                log("[proxy] low, refill...")
+                try:
+                    cands = await asyncio.wait_for(fetch_free_proxies(8), timeout=10)
+                    sem_p = asyncio.Semaphore(20)
+
+                    async def try_add(p: str) -> None:
+                        async with sem_p:
+                            if not await probe_proxy(p):
+                                return
+                            key = p if "://" in p else f"http://{p}"
+                            async with pool._lock:
+                                if key not in pool.proxies and key not in pool.bad:
+                                    pool.proxies.append(key)
+
+                    await asyncio.wait_for(
+                        asyncio.gather(*[try_add(p) for p in cands[:16]], return_exceptions=True),
+                        timeout=12,
+                    )
+                except Exception as e:
+                    log(f"[proxy] refill skip: {type(e).__name__}")
+                log(f"[proxy] alive={len(pool)}")
+
+            chunk = todo[i : i + batch]
+            tasks = [
+                asyncio.create_task(
+                    enrich_channel(cid, title, pool, sem, args.delay, cache, shared)
+                )
+                for cid, title in chunk
+            ]
+            for fut in asyncio.as_completed(tasks):
+                try:
+                    info = await fut
+                except Exception:
+                    unknown += 1
+                    done += 1
+                    continue
+                done += 1
+                if info.subscribers is None or info.year is None:
+                    unknown += 1
+                elif info.subscribers >= args.min_subs:
+                    ok1k += 1
+                else:
+                    below += 1
+                if done % 80 == 0:
+                    log(
+                        f"[enrich] {done}/{len(todo)} min1000={ok1k} below={below} "
+                        f"unknown={unknown} proxies={len(pool)}"
+                    )
+                if done % 400 == 0:
+                    save_enrich_cache(base, cache)
+                    summary = write_outputs(base, cache, args.min_subs, years)
+                    log(
+                        f"[flush] min1000={summary['min1000']} "
+                        f"below={summary['below_1000']} unknown={summary['unknown']}"
+                    )
+            log(
+                f"[enrich] {done}/{len(todo)} min1000={ok1k} below={below} "
+                f"unknown={unknown} proxies={len(pool)}"
+            )
 
     save_discovered(base, all_channels)
     save_enrich_cache(base, cache)

@@ -1,40 +1,63 @@
-AI in C# (Rasmus Wulff Jensen) | https://www.youtube.com/channel/UClmT_VztthYxP4MaD2fpHLw
-BabyFirst Learn Colors, ABCs, Rhymes & More | https://www.youtube.com/channel/UCmJ6eP-7_6gqm8moQukzd4A
-CBC News: The National | https://www.youtube.com/channel/UCKjU3KzdbJE1EFcHVqXC3_g
-deadnah | https://www.youtube.com/channel/UCjJc_1aOk-sopXeBKU6ExAw
-DW News | https://www.youtube.com/channel/UCknLrEdhRCp1aegoMqRaCZg
-Food Wishes | https://www.youtube.com/channel/UCRIZtPl9nb9RiXc9btSTQNw
-FOX8 WGHP | https://www.youtube.com/channel/UCBy_C4Tg58BRzyKky45Pfow
-FRANCE 24 English | https://www.youtube.com/channel/UCQfwfsi5VrQ8yKZ-UWmAEFg
-Geo News | https://www.youtube.com/channel/UC_vt34wimdCzdkrzVejwX9g
-GMA News | https://www.youtube.com/channel/UCqYw-CTd1dU2yGI71sEyqNw
-H- Mation | https://www.youtube.com/channel/UCQpE60Yj_RHh2UezEVKaCtg
-HubSpot Marketing | https://www.youtube.com/channel/UCVeuau7DLrg7zlAjxxDbdww
-Huda Beauty | https://www.youtube.com/channel/UCRSvEADlY-caz3sfDNwvR1A
-J. Cole | https://www.youtube.com/channel/UCnc6db-y3IU7CkT_yeVXdVg
-Jerry | https://www.youtube.com/channel/UChi9yxCMZ8PS3a-M4CGCC0g
-Jessie J | https://www.youtube.com/channel/UC4pEp0mo54WhEBCTYvjVDJA
-Julian Goldie SEO | https://www.youtube.com/channel/UCGpsgNbzdF7BECCVbB1COHw
-KOCO 5 News | https://www.youtube.com/channel/UCoIhMkbeDRBImkGiA5mZp5A
-Makeup GenZ | https://www.youtube.com/channel/UCoRUZZuGP0kk47VcoVz2HUg
-Putupau Gaming | https://www.youtube.com/channel/UCve9xzvEog1NjT9_lYzFNZQ
-Rare Beauty | https://www.youtube.com/channel/UCvOtsjwO04Seaep0J2clYEw
-Reuters | https://www.youtube.com/channel/UChqUTb7kYRX8-EiaN3XFrSQ
-Short of the Week | https://www.youtube.com/channel/UCyp-EzJrdTOd9uNPvmdst-w
-Sky News Australia | https://www.youtube.com/channel/UCO0akufu9MOzyz3nvGIXAAw
-The Sun | https://www.youtube.com/channel/UCIzXayRP7-P0ANpq-nD-h5g
-Thời Sự Phật Giáo | https://www.youtube.com/channel/UCE4tkCm_bcrrzi3JFKLbDhw
-Thời Sự TV24 | https://www.youtube.com/channel/UCPB6Ya-9QkFj7VFtb1r-UMQ
-Times News | https://www.youtube.com/channel/UCF-VP3b3oH0XASqsLI5rnLw
-TIN NHANH 24H ONLINE | https://www.youtube.com/channel/UC9UyUTFaLrYpQhTdTMwT9Bg
-Tiếng Nhật Suki | https://www.youtube.com/channel/UCtDX2yONSV32GLmjFNIG6cw
-Tiếng Trung Dương Châu | https://www.youtube.com/channel/UCCTP6tkNMdXiPDVCva48mvw
-TRẺ EM SINH TỒN | https://www.youtube.com/channel/UCVICJ40N62MG0W2IAIJjtcg
-WFLA News Channel 8 | https://www.youtube.com/channel/UCDvJcb8Adv-_bOrtnRLmiDw
-WMUR-TV | https://www.youtube.com/channel/UCwuZjWoiT30kDTz0G41Y8gQ
-WONDER HU | https://www.youtube.com/channel/UC1qqEbzWSSJn3e1vrTdu6FA
-WTOP News | https://www.youtube.com/channel/UCIFD9TMCLBXvJJMe2OpCtCA
-WVLT News | https://www.youtube.com/channel/UCDGjAh6DJ_DgpKiC3kFaPKg
-WWE | https://www.youtube.com/channel/UCJ5v_MCY6GNUBTO8-D3XoAg
-WXII 12 News | https://www.youtube.com/channel/UC0ZsHHC_frpcqneDpMiteCQ
-다낭 오가네 (Danang Ogane) | https://www.youtube.com/channel/UCqoag-Qx2yNZ1vV79lhmAdA
+WWE | https://www.youtube.com/channel/UCJ5v_MCY6GNUBTO8-D3XoAg | 113000000
+Justin Bieber | https://www.youtube.com/channel/UCIwFjwMjI0y7PDBVEO9-bkQ | 78900000
+Geo News | https://www.youtube.com/channel/UC_vt34wimdCzdkrzVejwX9g | 21100000
+GMA News | https://www.youtube.com/channel/UCqYw-CTd1dU2yGI71sEyqNw | 18100000
+Pocoyó 🇪🇸 Español - Canal Oficial | https://www.youtube.com/channel/UCnB5W_ZJgiDFnklejRGADxw | 15300000
+Trợ giúp YouTube | https://www.youtube.com/channel/UCMDQxm7cUx3yXkfeHa5zJIQ | 13200000
+Jessie J | https://www.youtube.com/channel/UC4pEp0mo54WhEBCTYvjVDJA | 10900000
+J. Cole | https://www.youtube.com/channel/UCnc6db-y3IU7CkT_yeVXdVg | 8480000
+The Sun | https://www.youtube.com/channel/UCIzXayRP7-P0ANpq-nD-h5g | 6500000
+DW News | https://www.youtube.com/channel/UCknLrEdhRCp1aegoMqRaCZg | 6340000
+Sky News Australia | https://www.youtube.com/channel/UCO0akufu9MOzyz3nvGIXAAw | 6230000
+T.I. | https://www.youtube.com/channel/UCsD7zvGKkqB7GvQpygW2few | 4910000
+Food Wishes | https://www.youtube.com/channel/UCRIZtPl9nb9RiXc9btSTQNw | 4690000
+Huda Beauty | https://www.youtube.com/channel/UCRSvEADlY-caz3sfDNwvR1A | 4450000
+Reuters | https://www.youtube.com/channel/UChqUTb7kYRX8-EiaN3XFrSQ | 4260000
+Hey Bear Sensory | https://www.youtube.com/channel/UCtf9cFBJkHVAf2qMqF01xYg | 3890000
+FRANCE 24 English | https://www.youtube.com/channel/UCQfwfsi5VrQ8yKZ-UWmAEFg | 3650000
+BabyFirst Learn Colors, ABCs, Rhymes & More | https://www.youtube.com/channel/UCmJ6eP-7_6gqm8moQukzd4A | 3480000
+Wong Fu Productions | https://www.youtube.com/channel/UCutXfzLC5wrV3SInT_tdY0w | 3160000
+Australian Open | https://www.youtube.com/channel/UCeTKJSW1NTAkf27nNmjWt5A | 3110000
+My Singing Monsters | https://www.youtube.com/channel/UCngRsuvI1zxHR9vwNZvpTAw | 2410000
+Short of the Week | https://www.youtube.com/channel/UCyp-EzJrdTOd9uNPvmdst-w | 2230000
+CBC News: The National | https://www.youtube.com/channel/UCKjU3KzdbJE1EFcHVqXC3_g | 2170000
+Kung Fu & Tai Chi Center w/ Jake Mace | https://www.youtube.com/channel/UCWYtZYH4kcbMm29liIOSGQQ | 1790000
+Jerry | https://www.youtube.com/channel/UChi9yxCMZ8PS3a-M4CGCC0g | 1760000
+Handyman Hal | https://www.youtube.com/channel/UC8KyyhPfL4v2sZGbcGg7b7Q | 1580000
+Times News | https://www.youtube.com/channel/UCF-VP3b3oH0XASqsLI5rnLw | 1270000
+FOX 4 Dallas-Fort Worth | https://www.youtube.com/channel/UCruQg25yVBppUWjza8AlyZA | 999000
+WFLA News Channel 8 | https://www.youtube.com/channel/UCDvJcb8Adv-_bOrtnRLmiDw | 829000
+Tiếng Trung Dương Châu | https://www.youtube.com/channel/UCCTP6tkNMdXiPDVCva48mvw | 745000
+Rare Beauty | https://www.youtube.com/channel/UCvOtsjwO04Seaep0J2clYEw | 742000
+HubSpot Marketing | https://www.youtube.com/channel/UCVeuau7DLrg7zlAjxxDbdww | 629000
+Julian Goldie SEO | https://www.youtube.com/channel/UCGpsgNbzdF7BECCVbB1COHw | 409000
+TIN NHANH 24H ONLINE | https://www.youtube.com/channel/UC9UyUTFaLrYpQhTdTMwT9Bg | 356000
+Thời Sự TV24 | https://www.youtube.com/channel/UCPB6Ya-9QkFj7VFtb1r-UMQ | 346000
+TRẺ EM SINH TỒN | https://www.youtube.com/channel/UCVICJ40N62MG0W2IAIJjtcg | 238000
+KOCO 5 News | https://www.youtube.com/channel/UCoIhMkbeDRBImkGiA5mZp5A | 217000
+WMUR-TV | https://www.youtube.com/channel/UCwuZjWoiT30kDTz0G41Y8gQ | 183000
+Putupau Gaming | https://www.youtube.com/channel/UCve9xzvEog1NjT9_lYzFNZQ | 159000
+Marc Evanstein / music․py | https://www.youtube.com/channel/UC0AJ676UuHdQ0zshDEkyfTA | 152000
+EE | https://www.youtube.com/channel/UCDlTucsLlXBdCcM36U2Vszw | 137000
+Tiếng Nhật Suki | https://www.youtube.com/channel/UCtDX2yONSV32GLmjFNIG6cw | 136000
+WONDER HU | https://www.youtube.com/channel/UC1qqEbzWSSJn3e1vrTdu6FA | 135000
+Nam nhị Ka | https://www.youtube.com/channel/UC82ZvN42XwuQuwaOk_qJ7DA | 120000
+deadnah | https://www.youtube.com/channel/UCjJc_1aOk-sopXeBKU6ExAw | 109000
+WXII 12 News | https://www.youtube.com/channel/UC0ZsHHC_frpcqneDpMiteCQ | 97000
+FOX8 WGHP | https://www.youtube.com/channel/UCBy_C4Tg58BRzyKky45Pfow | 81300
+다낭 오가네 (Danang Ogane) | https://www.youtube.com/channel/UCqoag-Qx2yNZ1vV79lhmAdA | 74800
+Ty | https://www.youtube.com/channel/UCKgdo5PfJAQOnWtgQw7NyZw | 63200
+Viện Văn Hóa Và Kinh Tế Việt Nam - ASEAN | https://www.youtube.com/channel/UCskoBcMy87q8ad92-v6i7UA | 58700
+WVLT News | https://www.youtube.com/channel/UCDGjAh6DJ_DgpKiC3kFaPKg | 58200
+Old No.7 Garage | https://www.youtube.com/channel/UCZMXkmT4PZSZZZfvVfXCqig | 57500
+H- Mation | https://www.youtube.com/channel/UCQpE60Yj_RHh2UezEVKaCtg | 40000
+WTOP News | https://www.youtube.com/channel/UCIFD9TMCLBXvJJMe2OpCtCA | 33100
+Trung Tâm Tin Học Trường Thịnh Vũng Tàu | https://www.youtube.com/channel/UCD-OA6BFdsLn0Qeikdwnzgg | 17700
+Thời Sự Phật Giáo | https://www.youtube.com/channel/UCE4tkCm_bcrrzi3JFKLbDhw | 16500
+The AA | https://www.youtube.com/channel/UC1u8LGZc3aG5uY4-iz_kbDQ | 13800
+De Zi cu Zi | https://www.youtube.com/channel/UCQ9K1GlX5zh0TdCJNAVHwRg | 8430
+Makeup GenZ | https://www.youtube.com/channel/UCoRUZZuGP0kk47VcoVz2HUg | 5290
+AI in C# (Rasmus Wulff Jensen) | https://www.youtube.com/channel/UClmT_VztthYxP4MaD2fpHLw | 3520
+Di sản Văn hóa Lào Cai | https://www.youtube.com/channel/UCzlLn3oh64-4pRV6Z9lLXIA | 1640
+Hoi Fu Jai | https://www.youtube.com/channel/UCiyGXE4O0oCzmR-lpxB7NOA | 1560
+J. Becerra Music | https://www.youtube.com/channel/UCSNq4dEmbH9JF7Cs0_JsbgQ | 1020

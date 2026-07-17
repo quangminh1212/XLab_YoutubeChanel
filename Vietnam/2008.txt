@@ -1,26 +1,60 @@
-ABC News (Australia) | https://www.youtube.com/channel/UCVgO39Bk5sMo66-6o6Spn6Q
-ARIRANG K-POP | https://www.youtube.com/channel/UC_6zPf4uuteHFFctnQtEaXQ
-BBC News Mundo | https://www.youtube.com/channel/UCUBIrDsIVzRpKsClMlSlTpQ
-BBC News Tiếng Việt | https://www.youtube.com/channel/UCpoNfKwZbecrcFpzm0ET4uw
-Báo và phát thanh, truyền hình Đà Nẵng | https://www.youtube.com/channel/UCp7D27kB0DUbFOs3iWExtTQ
-CBN News | https://www.youtube.com/channel/UCYI_ychRnL7sJrG6PUSBpQA
-danang alvaris | https://www.youtube.com/channel/UC5lLnc3Gc3VbdC5KQt1U5_w
-Hue Yang | https://www.youtube.com/channel/UCJhfQt9bK1MIfln_6FIzSRQ
-J是好玩 Just Fun | https://www.youtube.com/channel/UCgnVDGH1srFzNy2Gr_ft0yA
-KFOR Oklahoma's News 4 | https://www.youtube.com/channel/UCEUYiWFyzpEBMZ3aG7ud7xg
-KPTV FOX 12 Oregon | https://www.youtube.com/channel/UCyWF77WR3CfkZ52cc9XK5wQ
-Linus Tech Tips | https://www.youtube.com/channel/UCXuqSBlHAE6Xw-yeJA0Tunw
-Mac Anh Roblox Vietnam | https://www.youtube.com/channel/UCge_o97c-d5MsOkrPzZXLSw
-Naio Nails | https://www.youtube.com/channel/UCtDtcvOyPm2jSAMtqeVPggA
-NBC 10 WJAR | https://www.youtube.com/channel/UCUdmmvN3uwTsrdpyAlSaAXA
-News 5 Cleveland | https://www.youtube.com/channel/UCAAmkc2sRESFoEtiKRTaTRA
-NewsX Live | https://www.youtube.com/channel/UCytSP0M0Jdnw6qIy3Y-nTig
-NikkieTutorials | https://www.youtube.com/channel/UCzTKskwIc_-a0cGvCXA848Q
-RTÉ News | https://www.youtube.com/channel/UC8urSFTmQDxaPDEIZ2Fd63Q
-Studio C | https://www.youtube.com/channel/UCsZXuHKonP9utl5q2hFCkgA
-Thời Sự Phật Pháp | https://www.youtube.com/channel/UCEsheYZTA-ms0dU23nGNUxA
-Times Now | https://www.youtube.com/channel/UC6RJ7-PaXg6TIH2BzZfTV7w
-Trung tâm Giáo dục Thiên nhiên | https://www.youtube.com/channel/UCnre4Uq1cqh31p1kYSYb8TA
-USA-VIET Baby | https://www.youtube.com/channel/UCL1xxT_4DLs06zxGP3Mak5g
-W Magazine | https://www.youtube.com/channel/UCB_TGajnJymiSmu6zWkjW2Q
-民視新聞網 Formosa TV News network | https://www.youtube.com/channel/UC2VmWn8dAqkzlQqvy02E1PA
+JYP Entertainment | https://www.youtube.com/channel/UCaO6TYtlC8U5ttz62hTrZgg | 32100000
+Linus Tech Tips | https://www.youtube.com/channel/UCXuqSBlHAE6Xw-yeJA0Tunw | 16900000
+NikkieTutorials | https://www.youtube.com/channel/UCzTKskwIc_-a0cGvCXA848Q | 15300000
+cricket.com.au | https://www.youtube.com/channel/UCkBY0aHJP9BwjZLDYxAQrKg | 10500000
+Times Now | https://www.youtube.com/channel/UC6RJ7-PaXg6TIH2BzZfTV7w | 7540000
+BBC News Mundo | https://www.youtube.com/channel/UCUBIrDsIVzRpKsClMlSlTpQ | 4800000
+Voice of America | https://www.youtube.com/channel/UCVSNOxehfALut52NbkfRBaA | 3770000
+Studio C | https://www.youtube.com/channel/UCsZXuHKonP9utl5q2hFCkgA | 3460000
+CBN News | https://www.youtube.com/channel/UCYI_ychRnL7sJrG6PUSBpQA | 2820000
+ABC News (Australia) | https://www.youtube.com/channel/UCVgO39Bk5sMo66-6o6Spn6Q | 2580000
+BBC News Tiếng Việt | https://www.youtube.com/channel/UCpoNfKwZbecrcFpzm0ET4uw | 2390000
+ARIRANG K-POP | https://www.youtube.com/channel/UC_6zPf4uuteHFFctnQtEaXQ | 2089999
+Naio Nails | https://www.youtube.com/channel/UCtDtcvOyPm2jSAMtqeVPggA | 1840000
+NewsX Live | https://www.youtube.com/channel/UCytSP0M0Jdnw6qIy3Y-nTig | 1620000
+民視新聞網 Formosa TV News network | https://www.youtube.com/channel/UC2VmWn8dAqkzlQqvy02E1PA | 1490000
+W Magazine | https://www.youtube.com/channel/UCB_TGajnJymiSmu6zWkjW2Q | 1090000
+Pianta | https://www.youtube.com/channel/UCkOu814wigKaeu-b2hFdU6w | 839000
+SE Bikes | https://www.youtube.com/channel/UCqfQLEryIx3r6OP2VhyNWQw | 789000
+Hi-5 Latino | https://www.youtube.com/channel/UChQLE-Uo8oy4NAHgNsvJKgA | 751000
+News 5 Cleveland | https://www.youtube.com/channel/UCAAmkc2sRESFoEtiKRTaTRA | 363000
+Mugiwara Cosplay | https://www.youtube.com/channel/UCtaeKjOmTuPTa2pt_mYoKvQ | 279000
+RTÉ News | https://www.youtube.com/channel/UC8urSFTmQDxaPDEIZ2Fd63Q | 236000
+Aviation International News | https://www.youtube.com/channel/UC3sUXXXvm0BcU8MS3KcXOig | 230000
+TE VIDEOS | https://www.youtube.com/channel/UCrPND-XIOQgPxU55utSWPFw | 218000
+EA SPORTS FC France | https://www.youtube.com/channel/UCEfF6YzN0MoEyW69MSVgYaA | 182000
+KFOR Oklahoma's News 4 | https://www.youtube.com/channel/UCEUYiWFyzpEBMZ3aG7ud7xg | 172000
+NBC 10 WJAR | https://www.youtube.com/channel/UCUdmmvN3uwTsrdpyAlSaAXA | 163000
+Wonder EO | https://www.youtube.com/channel/UCUFLZTlEPJNr04bQeCKr0PQ | 160000
+J是好玩 Just Fun | https://www.youtube.com/channel/UCgnVDGH1srFzNy2Gr_ft0yA | 144000
+KPTV FOX 12 Oregon | https://www.youtube.com/channel/UCyWF77WR3CfkZ52cc9XK5wQ | 144000
+GE Appliances | https://www.youtube.com/channel/UCwWfqmS20Q8yOeS8P6_XwlA | 126000
+NederlandZingt (EO) | https://www.youtube.com/channel/UCMvtMm1A_I8o793TgMZN46Q | 94100
+YU'sチャンネル | https://www.youtube.com/channel/UCzpmCNnz34VTHbPcB54Y3Cg | 83200
+Toys "R" Us UK | https://www.youtube.com/channel/UCd0L4T_qtylQHtdPxz9j89A | 82800
+Báo và phát thanh, truyền hình Đà Nẵng | https://www.youtube.com/channel/UCp7D27kB0DUbFOs3iWExtTQ | 68500
+Ci Locatelli Inglês Online | https://www.youtube.com/channel/UCKpQ6xaChTitkv7OwUHtpeA | 64200
+FE MEDIA | https://www.youtube.com/channel/UC_EEBsgC4VbtjT5_yuhRRjA | 52400
+Văn quyết ô tô Cỏ thái nguyên | https://www.youtube.com/channel/UCsJZW40nluFcx_TBoE7m_9w | 40400
+CI Surfboards | https://www.youtube.com/channel/UCN8yvWNHBr5efDkWhpimGCw | 33000
+IE University | https://www.youtube.com/channel/UCOfVY-ssI7Oi-luM3axRIEQ | 30400
+Zé Túbia | https://www.youtube.com/channel/UCSSF-47af2PsQ1BmgRYneTA | 26800
+GY Music蓋瑞音樂 | https://www.youtube.com/channel/UC-DIuGoHriVnvqY8x984bXQ | 14400
+Miu Miu mê truyện Audio | https://www.youtube.com/channel/UCwW1I1xnLWhLC74pUHXnKxg | 13000
+AA New Zealand | https://www.youtube.com/channel/UC9wF2xSdJSNkwmobVCHgu_Q | 11400
+Mac Anh Roblox Vietnam | https://www.youtube.com/channel/UCge_o97c-d5MsOkrPzZXLSw | 11300
+ĐẤT VIỆT - Làng Hài Văn Hóa Việt | https://www.youtube.com/channel/UCfexJ22DSOSfqAZirWz6nIA | 6790
+Zé Parizi | https://www.youtube.com/channel/UC03OlMczw-f_Hjaq3r0mTfQ | 4970
+Thời Sự Phật Pháp | https://www.youtube.com/channel/UCEsheYZTA-ms0dU23nGNUxA | 4630
+Trung tâm Giáo dục Thiên nhiên | https://www.youtube.com/channel/UCnre4Uq1cqh31p1kYSYb8TA | 3840
+Nu Nu | https://www.youtube.com/channel/UCKOhpA6tCd9F9TsVGMjeOKQ | 3820
+danang alvaris | https://www.youtube.com/channel/UC5lLnc3Gc3VbdC5KQt1U5_w | 3440
+Saigon South International School (SSIS) | https://www.youtube.com/channel/UCPf3VYERokmGuEiV7zZ4LxQ | 3090
+Hue Yang | https://www.youtube.com/channel/UCJhfQt9bK1MIfln_6FIzSRQ | 2890
+PHÚC VŨ VĨNH | https://www.youtube.com/channel/UCGpV1V7wwZzi-IXl--FcvwQ | 2790
+CTV Phim Han Quoc 1 | https://www.youtube.com/channel/UCBBEybL7dHbli8OkJwe1kJg | 2730
+USA-VIET Baby | https://www.youtube.com/channel/UCL1xxT_4DLs06zxGP3Mak5g | 2230
+Lớp Youtube | https://www.youtube.com/channel/UCxlA-jvFHne0ORBTo3vJ8WA | 1860
+Dalat Videos | https://www.youtube.com/channel/UCqm7I5lFj2x8K66U3HzLJiA | 1690
+mu mu 360 のゲームライフ | https://www.youtube.com/channel/UCX9EZHZlzGQunfydoJ4Up3w | 1660
+NĂNG LƯỢNG EDM VIỆT | https://www.youtube.com/channel/UC4_ZePXrbLxfjXugsLrl2eg | 1060
