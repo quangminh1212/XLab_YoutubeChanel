@@ -11,5 +11,7 @@ crawl_retry.log
 crawl_retry.err.log
 crawl_proxy.log
 crawl_proxy.err.log
+crawl_min1k.log
+crawl_min1k.err.log
 free_proxies_sample.txt
 proxy_profile.yml
