@@ -9,3 +9,7 @@ crawl_full.log
 crawl_full.err.log
 crawl_retry.log
 crawl_retry.err.log
+crawl_proxy.log
+crawl_proxy.err.log
+free_proxies_sample.txt
+proxy_profile.yml
